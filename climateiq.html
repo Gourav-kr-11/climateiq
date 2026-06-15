@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClimateIQ — AI Climate Awareness Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700&display=swap');
+
+  :root {
+    --green-50: #EAF3DE; --green-600: #3B6D11; --green-800: #27500A;
+    --teal-50: #E1F5EE; --teal-600: #0F6E56; --teal-800: #085041;
+    --blue-50: #E6F1FB; --blue-600: #185FA5; --blue-800: #0C447C;
+    --amber-50: #FAEEDA; --amber-600: #854F0B; --amber-800: #633806;
+    --gray-50: #F1EFE8; --gray-200: #B4B2A9; --gray-600: #5F5E5A; --gray-800: #444441;
+    --bg: #F7F9F4; --surface: #FFFFFF; --border: rgba(0,0,0,0.1);
+    --text: #1A1F14; --text-muted: #5F5E5A;
+    --accent: #2D6A1F; --accent-light: #EAF3DE;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .nav-tab:hover { background: var(--green-50); color: var(--green-600); }
+  .nav-tab.active { background: var(--green-50); color: var(--green-800); }
+  .sdg-pill {
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--accent);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+
+  /* PAGES */
+  .page { display: none; max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+  .page.active { display: block; }
+
+  /* HERO */
+  .hero-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--green-600);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  h1.hero-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 6vw, 52px);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+  }
+  h1.hero-title span { color: var(--accent); }
+  .hero-sub {
+    font-size: 16px;
+    color: var(--text-muted);
+    max-width: 520px;
+    margin-bottom: 2rem;
+    line-height: 1.7;
+  }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    text-decoration: none;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    color: var(--accent);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 11px 22px;
+    border-radius: 8px;
+    border: 1.5px solid var(--accent);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-secondary:hover { background: var(--green-50); }
+
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+  }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .how-it-works {
+    margin-top: 3rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .hiw-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .hiw-num {
+    width: 28px; height: 28px;
+    background: var(--green-50);
+    color: var(--green-800);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
+    margin-bottom: 12px;
+  }
+  .hiw-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .hiw-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  /* CALCULATOR */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+  .section-sub { font-size: 14px; color: var(--text-muted); margin-bottom: 2rem; }
+
+  .form-group { margin-bottom: 1.5rem; }
+  .form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .form-label span { font-weight: 400; color: var(--text-muted); }
+  .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .form-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .form-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--green-600);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  select, input[type="number"] {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+  select:focus, input[type="number"]:focus { border-color: var(--accent); }
+
+  .api-key-banner {
+    background: var(--amber-50);
+    border: 1px solid rgba(133,79,11,0.2);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .api-key-banner .icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .api-key-banner p { font-size: 13px; color: var(--amber-600); line-height: 1.5; }
+  .api-key-banner input {
+    margin-top: 8px;
+    background: white;
+    border-color: rgba(133,79,11,0.3);
+    font-size: 13px;
+  }
+
+  /* RESULTS */
+  .result-hero {
+    background: linear-gradient(135deg, var(--accent) 0%, #1a4d10 100%);
+    border-radius: 16px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .result-co2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .result-co2-unit { font-size: 18px; font-weight: 400; opacity: 0.8; }
+  .result-label { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+  .result-comparison {
+    text-align: right;
+  }
+  .result-vs { font-size: 13px; opacity: 0.7; }
+  .result-vs-num { font-size: 22px; font-weight: 600; }
+
+  .breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .breakdown-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .breakdown-icon { font-size: 22px; margin-bottom: 6px; }
+  .breakdown-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .breakdown-cat { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .chart-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+
+  /* ACTION PLAN */
+  .action-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    transition: border-color 0.15s;
+  }
+  .action-item:hover { border-color: var(--accent); }
+  .action-rank {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--green-50);
+    color: var(--green-800);
+    font-size: 13px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .action-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .action-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .action-saving {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    background: var(--green-50);
+    color: var(--green-800);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+  }
+
+  /* AI EXPLANATION */
+  .ai-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .ai-box-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--green-600);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ai-box-text { font-size: 14px; color: var(--text); line-height: 1.7; }
+
+  /* CHATBOT */
+  .chat-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+  }
+  .chat-header {
+    background: var(--accent);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .chat-avatar {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .chat-header-info { flex: 1; }
+  .chat-header-name { font-size: 14px; font-weight: 600; color: white; }
+  .chat-header-status { font-size: 11px; color: rgba(255,255,255,0.7); }
+  .chat-status-dot {
+    width: 7px; height: 7px;
+    background: #7CFC00;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 4px;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .msg {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    max-width: 88%;
+  }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+  .msg.bot .msg-bubble {
+    background: var(--bg);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.user .msg-bubble {
+    background: var(--accent);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-avatar {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--green-50);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .chat-suggestions {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .suggestion-chip {
+    font-size: 12px;
+    padding: 5px 10px;
+    background: var(--green-50);
+    color: var(--green-800);
+    border-radius: 20px;
+    cursor: pointer;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    transition: background 0.15s;
+    font-weight: 500;
+  }
+  .suggestion-chip:hover { background: #C0DD97; }
+
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  #chat-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    outline: none;
+    background: var(--bg);
+    color: var(--text);
+  }
+  #chat-input:focus { border-color: var(--accent); }
+  .send-btn {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn svg { width: 18px; height: 18px; fill: white; }
+
+  /* QUIZ */
+  .quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .quiz-q { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 1.25rem; }
+  .quiz-options { display: grid; gap: 10px; }
+  .quiz-opt {
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--bg);
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.15s;
+  }
+  .quiz-opt:hover { border-color: var(--accent); background: var(--green-50); color: var(--green-800); }
+  .quiz-opt.correct { border-color: #3B6D11; background: var(--green-50); color: var(--green-800); }
+  .quiz-opt.wrong { border-color: #A32D2D; background: #FCEBEB; color: #A32D2D; }
+
+  /* LOADING */
+  .loading-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+  }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: var(--text-muted); }
+
+  .typing-dots span {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: bounce 1.2s infinite;
+  }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+
+  .fact-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .fact-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+  }
+  .fact-tag {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--green-600);
+    margin-bottom: 8px;
+  }
+  .fact-text { font-size: 15px; color: var(--text); line-height: 1.65; }
+
+  @media (max-width: 540px) {
+    nav { padding: 0 1rem; }
+    .nav-tab { padding: 5px 10px; font-size: 12px; }
+    .hero-stats { grid-template-columns: repeat(2, 1fr); }
+    .result-hero { flex-direction: column; }
+    .result-comparison { text-align: left; }
+    h1.hero-title { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><div class="logo-dot"></div> ClimateIQ</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('home')">Home</button>
+    <button class="nav-tab" onclick="showPage('calc')">Calculator</button>
+    <button class="nav-tab" onclick="showPage('chat')">Ask AI</button>
+    <button class="nav-tab" onclick="showPage('learn')">Learn</button>
+  </div>
+  <div class="sdg-pill">SDG 13</div>
+</nav>
+
+<!-- HOME PAGE -->
+<div id="page-home" class="page active">
+  <div class="hero-label">AI for Climate Action · 1M1B Internship Project</div>
+  <h1 class="hero-title">Know your <span>climate impact.</span><br>Act on it.</h1>
+  <p class="hero-sub">ClimateIQ uses AI to calculate your personal carbon footprint, explain what it means, and give you a personalised action plan — in minutes.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <button class="btn-primary" onclick="showPage('calc')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Calculate my footprint
+    </button>
+    <button class="btn-secondary" onclick="showPage('chat')">Ask the AI →</button>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-card">
+      <div class="stat-num">4.7t</div>
+      <div class="stat-label">Global avg CO₂ per person / year</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">1.5°C</div>
+      <div class="stat-label">Paris Agreement warming limit</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">2050</div>
+      <div class="stat-label">Net-zero target for most nations</div>
+    </div>
+  </div>
+
+  <div class="how-it-works">
+    <div class="hiw-card">
+      <div class="hiw-num">1</div>
+      <div class="hiw-title">Fill in your lifestyle</div>
+      <div class="hiw-desc">Answer questions about transport, diet, energy and shopping — takes 3 minutes.</div>
+    </div>
+    <div class="hiw-card">
+      <div class="hiw-num">2</div>
+      <div class="hiw-title">See your footprint</div>
+      <div class="hiw-desc">AI calculates your annual CO₂ and shows how it compares to global averages.</div>
+    </div>
+    <div class="hiw-card">
+      <div class="hiw-num">3</div>
+      <div class="hiw-title">Get an action plan</div>
+      <div class="hiw-desc">Personalised, ranked steps with real CO₂ savings — specific to your lifestyle.</div>
+    </div>
+    <div class="hiw-card">
+      <div class="hiw-num">4</div>
+      <div class="hiw-title">Chat & learn more</div>
+      <div class="hiw-desc">Ask the AI anything about climate, SDG 13, or your results.</div>
+    </div>
+  </div>
+</div>
+
+<!-- CALCULATOR PAGE -->
+<div id="page-calc" class="page">
+  <div id="calc-form-section">
+    <div class="section-title">Carbon footprint calculator</div>
+    <div class="section-sub">Answer honestly — all results stay in your browser.</div>
+
+    <div class="api-key-banner">
+      <div class="icon">🔑</div>
+      <div style="flex:1;">
+        <p><strong>Anthropic API key required</strong> for AI explanations and action plans. Get a free key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--amber-600);">console.anthropic.com</a>. Your key is never stored or sent anywhere except directly to Anthropic.</p>
+        <input type="password" id="api-key" placeholder="sk-ant-..." style="width:100%;margin-top:8px;">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🚗 Transport</div>
+      <div class="form-group">
+        <label class="form-label">How do you usually travel? <span>(primary mode)</span></label>
+        <select id="transport-mode">
+          <option value="walk_cycle">Walk or cycle</option>
+          <option value="public">Public transport (bus/train)</option>
+          <option value="car_petrol" selected>Petrol/diesel car</option>
+          <option value="car_electric">Electric car</option>
+          <option value="motorbike">Motorbike</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Km driven or travelled per week</label>
+        <input type="number" id="km-week" value="150" min="0" max="2000">
+        <div class="form-hint">Include commute, errands, school runs, etc.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Short-haul flights per year <span>(under 4 hours)</span></label>
+        <input type="number" id="flights-short" value="2" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Long-haul flights per year <span>(over 4 hours)</span></label>
+        <input type="number" id="flights-long" value="1" min="0">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🍽️ Diet</div>
+      <div class="form-group">
+        <label class="form-label">Your diet type</label>
+        <select id="diet">
+          <option value="vegan">Vegan</option>
+          <option value="vegetarian">Vegetarian</option>
+          <option value="flexitarian">Flexitarian (meat 1–3 times/week)</option>
+          <option value="omnivore" selected>Omnivore (meat most days)</option>
+          <option value="meat_heavy">Meat heavy (beef/lamb daily)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">How much food do you waste?</label>
+        <select id="food-waste">
+          <option value="low">Very little — I use everything</option>
+          <option value="medium" selected>Some — leftovers sometimes go bad</option>
+          <option value="high">A lot — I throw out food regularly</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🏠 Home energy</div>
+      <div class="form-group">
+        <label class="form-label">Monthly electricity bill (₹ or $ equivalent)</label>
+        <input type="number" id="electricity" value="1500" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Heating source</label>
+        <select id="heating">
+          <option value="none">No heating / fans only</option>
+          <option value="electric" selected>Electric (AC / heater)</option>
+          <option value="gas">Natural gas</option>
+          <option value="lpg">LPG / kerosene</option>
+          <option value="solar">Solar or renewable</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Number of people in your household</label>
+        <input type="number" id="household" value="4" min="1" max="20">
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🛍️ Consumption</div>
+      <div class="form-group">
+        <label class="form-label">New clothes bought per month</label>
+        <select id="clothes">
+          <option value="0">0 — I barely shop for clothes</option>
+          <option value="1-2" selected>1–2 items</option>
+          <option value="3-5">3–5 items</option>
+          <option value="6+">6 or more</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">How often do you buy new electronics/appliances?</label>
+        <select id="electronics">
+          <option value="rarely">Rarely — I use things for years</option>
+          <option value="sometimes" selected>Sometimes — every 2–3 years</option>
+          <option value="often">Often — I upgrade regularly</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="calculateFootprint()" style="width:100%;justify-content:center;">
+      Calculate my carbon footprint →
+    </button>
+  </div>
+
+  <div id="calc-loading" class="loading-state">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-msg">Calculating your footprint...</div>
+  </div>
+
+  <div id="calc-results" style="display:none;">
+    <div id="result-hero-div"></div>
+    <div id="breakdown-div"></div>
+    <div id="chart-div"></div>
+    <div id="ai-explanation-div"></div>
+    <div id="action-plan-div"></div>
+    <div style="margin-top:1.5rem;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="showPage('chat')">Ask AI questions about my results →</button>
+      <button class="btn-secondary" onclick="resetCalc()">Recalculate</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT PAGE -->
+<div id="page-chat" class="page">
+  <div class="section-title">Ask the Climate AI</div>
+  <div class="section-sub">Ask anything about climate change, SDG 13, or your carbon footprint.</div>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="chat-avatar">🌿</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">ClimateIQ Assistant</div>
+        <div class="chat-header-status"><span class="chat-status-dot"></span>Powered by Claude AI</div>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg bot">
+        <div class="msg-avatar">🌿</div>
+        <div class="msg-bubble">Hi! I'm your ClimateIQ assistant. I can help you understand climate change, explain SDG 13, interpret your carbon footprint results, or suggest actions you can take. What would you like to know?</div>
+      </div>
+    </div>
+
+    <div class="chat-suggestions">
+      <button class="suggestion-chip" onclick="sendSuggestion('What is SDG 13 and why does it matter?')">What is SDG 13?</button>
+      <button class="suggestion-chip" onclick="sendSuggestion('What is a carbon footprint and how is it calculated?')">What is a carbon footprint?</button>
+      <button class="suggestion-chip" onclick="sendSuggestion('What are the top 3 things an individual can do to reduce climate impact?')">Top 3 actions I can take</button>
+      <button class="suggestion-chip" onclick="sendSuggestion('How does diet affect climate change?')">Diet & climate</button>
+    </div>
+
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Ask about climate change..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="send-btn" onclick="sendChat()" aria-label="Send message">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;">
+    <div class="api-key-banner">
+      <div class="icon">🔑</div>
+      <div style="flex:1;">
+        <p>Enter your Anthropic API key to enable AI responses. Get one free at <a href="https://console.anthropic.com" target="_blank" style="color:var(--amber-600);">console.anthropic.com</a></p>
+        <input type="password" id="chat-api-key" placeholder="sk-ant-..." style="width:100%;margin-top:8px;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LEARN PAGE -->
+<div id="page-learn" class="page">
+  <div class="section-title">Climate facts & quiz</div>
+  <div class="section-sub">Learn the key facts about SDG 13 and test your knowledge.</div>
+
+  <div id="facts-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <div style="font-size:14px;font-weight:600;color:var(--text);">Today's climate facts</div>
+      <button class="btn-secondary" onclick="loadFacts()" style="font-size:12px;padding:6px 14px;">Refresh facts ↻</button>
+    </div>
+    <div id="facts-container">
+      <div class="loading-state" style="display:flex;">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading climate facts...</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:2rem;">
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:1rem;">Test your knowledge</div>
+    <div id="quiz-container"></div>
+    <button class="btn-secondary" onclick="loadQuiz()" style="margin-top:0.5rem;font-size:12px;padding:6px 14px;" id="new-quiz-btn">New question ↻</button>
+  </div>
+</div>
+
+<script>
+const QUIZ_QUESTIONS = [
+  { q: "What percentage of global CO₂ emissions comes from the energy sector?", opts: ["About 20%","About 35%","About 73%","About 90%"], ans: 2, exp: "The energy sector — burning fossil fuels for electricity, heat, and transport — accounts for about 73% of global greenhouse gas emissions." },
+  { q: "Which gas is the most potent greenhouse gas over a 20-year period?", opts: ["Carbon dioxide (CO₂)","Methane (CH₄)","Nitrous oxide (N₂O)","Water vapour"], ans: 1, exp: "Methane is about 80× more potent than CO₂ over 20 years, which is why reducing livestock farming and plugging gas leaks matters so much." },
+  { q: "How much has the Earth's average temperature risen since pre-industrial times?", opts: ["0.5°C","1.1°C","1.8°C","2.5°C"], ans: 1, exp: "Earth has already warmed by about 1.1°C above pre-industrial levels. The Paris Agreement aims to limit warming to 1.5°C." },
+  { q: "What does SDG 13 specifically call for?", opts: ["Eliminate coal power by 2030","Take urgent action to combat climate change","Plant 1 trillion trees by 2025","Ban single-use plastics globally"], ans: 1, exp: "SDG 13 calls for urgent action to combat climate change and its impacts, including strengthening resilience and building capacity in developing countries." },
+  { q: "Which dietary choice has the biggest impact on reducing your carbon footprint?", opts: ["Avoiding palm oil","Eating less beef and lamb","Buying organic food","Reducing salt intake"], ans: 1, exp: "Beef and lamb produce far more greenhouse gases per kg than any other food — up to 60kg of CO₂ per kg of beef. Reducing red meat is one of the highest-impact diet changes." },
+  { q: "What is 'net zero'?", opts: ["Zero total emissions from any source","When emissions released equal emissions removed","No fossil fuels burned","100% renewable energy use"], ans: 1, exp: "Net zero means balancing the amount of greenhouse gases released with the amount removed from the atmosphere, resulting in no net addition of CO₂." },
+];
+
+let currentQuiz = null;
+let chatHistory = [];
+let footprintData = {};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  const map = { home: 0, calc: 1, chat: 2, learn: 3 };
+  tabs[map[name]].classList.add('active');
+  if (name === 'learn' && document.getElementById('facts-container').querySelector('.spinner')) {
+    loadFacts();
+    loadQuiz();
+  }
+}
+
+function getApiKey() {
+  return document.getElementById('api-key')?.value?.trim() ||
+         document.getElementById('chat-api-key')?.value?.trim() || '';
+}
+
+async function callClaude(messages, systemPrompt) {
+  const key = getApiKey();
+  if (!key) return '⚠️ Please enter your Anthropic API key above to enable AI features.';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 1000, system: systemPrompt, messages })
+    });
+    const data = await res.json();
+    if (data.error) return '⚠️ API error: ' + data.error.message;
+    return data.content?.[0]?.text || 'No response received.';
+  } catch(e) {
+    return '⚠️ Could not reach the AI. Check your API key and internet connection.';
+  }
+}
+
+// --- CALCULATOR ---
+const EMISSION_FACTORS = {
+  transport: { walk_cycle: 0, public: 0.089, car_petrol: 0.171, car_electric: 0.053, motorbike: 0.114 },
+  diet: { vegan: 1.5, vegetarian: 1.7, flexitarian: 2.5, omnivore: 3.3, meat_heavy: 4.5 },
+  food_waste: { low: 0, medium: 0.2, high: 0.5 },
+  heating: { none: 0, electric: 0.5, gas: 0.8, lpg: 1.0, solar: 0.05 },
+  clothes: { "0": 0, "1-2": 0.3, "3-5": 0.7, "6+": 1.2 },
+  electronics: { rarely: 0.2, sometimes: 0.5, often: 1.0 }
+};
+
+function calculateFootprint() {
+  const mode = document.getElementById('transport-mode').value;
+  const km = parseFloat(document.getElementById('km-week').value) || 0;
+  const shortFlights = parseFloat(document.getElementById('flights-short').value) || 0;
+  const longFlights = parseFloat(document.getElementById('flights-long').value) || 0;
+  const diet = document.getElementById('diet').value;
+  const foodWaste = document.getElementById('food-waste').value;
+  const elec = parseFloat(document.getElementById('electricity').value) || 0;
+  const heating = document.getElementById('heating').value;
+  const household = parseFloat(document.getElementById('household').value) || 1;
+  const clothes = document.getElementById('clothes').value;
+  const electronics = document.getElementById('electronics').value;
+
+  const transport = (km * 52 * EMISSION_FACTORS.transport[mode]) / 1000;
+  const flights = (shortFlights * 0.255) + (longFlights * 1.5);
+  const dietCO2 = EMISSION_FACTORS.diet[diet] + EMISSION_FACTORS.food_waste[foodWaste];
+  const homeCO2 = ((elec * 0.0005 * 12) + EMISSION_FACTORS.heating[heating]) / Math.max(household, 1);
+  const consumeCO2 = EMISSION_FACTORS.clothes[clothes] + EMISSION_FACTORS.electronics[electronics];
+
+  const total = transport + flights + dietCO2 + homeCO2 + consumeCO2;
+
+  footprintData = { total: Math.round(total * 10) / 10, transport: Math.round(transport * 10) / 10, flights: Math.round(flights * 10) / 10, diet: Math.round(dietCO2 * 10) / 10, home: Math.round(homeCO2 * 10) / 10, consumption: Math.round(consumeCO2 * 10) / 10, inputs: { mode, km, shortFlights, longFlights, diet, foodWaste, elec, heating, household, clothes, electronics } };
+
+  document.getElementById('calc-form-section').style.display = 'none';
+  const loadEl = document.getElementById('calc-loading');
+  loadEl.style.display = 'flex';
+
+  showResults();
+}
+
+async function showResults() {
+  const d = footprintData;
+  const global_avg = 4.7;
+  const india_avg = 1.9;
+  const ratio = (d.total / global_avg).toFixed(1);
+  const comparison = d.total > global_avg ? `${ratio}× the global average` : d.total < india_avg ? 'below the Indian average — excellent!' : 'below the global average';
+
+  document.getElementById('loading-msg').textContent = 'Analysing with AI...';
+
+  document.getElementById('result-hero-div').innerHTML = `
+    <div class="result-hero">
+      <div>
+        <div style="font-size:13px;opacity:0.75;margin-bottom:4px;font-weight:500;">YOUR ANNUAL CARBON FOOTPRINT</div>
+        <div class="result-co2">${d.total}<span class="result-co2-unit"> t CO₂e</span></div>
+        <div class="result-label">That's ${comparison}</div>
+      </div>
+      <div class="result-comparison">
+        <div class="result-vs">🌍 Global average</div>
+        <div class="result-vs-num">4.7t CO₂e</div>
+        <div style="margin-top:10px;font-size:12px;opacity:0.7;">🇮🇳 India average: 1.9t</div>
+      </div>
+    </div>`;
+
+  document.getElementById('breakdown-div').innerHTML = `
+    <div class="breakdown-grid">
+      <div class="breakdown-card"><div class="breakdown-icon">🚗</div><div class="breakdown-val">${d.transport}t</div><div class="breakdown-cat">Transport</div></div>
+      <div class="breakdown-card"><div class="breakdown-icon">✈️</div><div class="breakdown-val">${d.flights}t</div><div class="breakdown-cat">Flights</div></div>
+      <div class="breakdown-card"><div class="breakdown-icon">🍽️</div><div class="breakdown-val">${d.diet}t</div><div class="breakdown-cat">Diet</div></div>
+      <div class="breakdown-card"><div class="breakdown-icon">🏠</div><div class="breakdown-val">${d.home}t</div><div class="breakdown-cat">Home energy</div></div>
+      <div class="breakdown-card"><div class="breakdown-icon">🛍️</div><div class="breakdown-val">${d.consumption}t</div><div class="breakdown-cat">Consumption</div></div>
+    </div>`;
+
+  document.getElementById('chart-div').innerHTML = `
+    <div class="chart-wrap">
+      <div class="chart-title">Your footprint vs global benchmarks (tonnes CO₂e/year)</div>
+      <canvas id="fp-chart" height="200"></canvas>
+    </div>`;
+
+  document.getElementById('calc-loading').style.display = 'none';
+  document.getElementById('calc-results').style.display = 'block';
+
+  const ctx = document.getElementById('fp-chart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['You', 'India avg', 'Global avg', 'US avg', 'Safe limit'],
+      datasets: [{
+        data: [d.total, 1.9, 4.7, 14.2, 2.0],
+        backgroundColor: ['#2D6A1F', '#7CBA47', '#A0AFA5', '#E8A87C', '#5BA4CF'],
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, title: { display: true, text: 'Tonnes CO₂e' } } }
+    }
+  });
+
+  const systemPrompt = `You are a climate education AI for an SDG 13 project. Explain a user's carbon footprint result clearly, conversationally, and helpfully. Be specific about what is driving their footprint. Use simple language. Keep it to 3–4 sentences.`;
+  const msg = `My annual carbon footprint is ${d.total} tonnes CO₂e. Breakdown: transport ${d.transport}t, flights ${d.flights}t, diet ${d.diet}t, home energy ${d.home}t, consumption ${d.consumption}t. Global average is 4.7t. Please explain what this means for me.`;
+
+  const explanation = await callClaude([{ role: 'user', content: msg }], systemPrompt);
+
+  document.getElementById('ai-explanation-div').innerHTML = `
+    <div class="ai-box">
+      <div class="ai-box-label">✨ AI analysis</div>
+      <div class="ai-box-text">${explanation}</div>
+    </div>`;
+
+  const actionSystemPrompt = `You are a climate action advisor for an SDG 13 awareness tool. Given a user's carbon footprint data, generate exactly 5 personalised, specific, achievable actions. For each, give: a short action title, a one-sentence description, and an estimated annual CO₂ saving in kg. Format as JSON array: [{title, description, saving_kg}]. Only output JSON, no markdown.`;
+  const actionMsg = `User footprint: ${d.total}t total. Transport: ${d.transport}t (mode: ${d.inputs.mode}, ${d.inputs.km}km/week, ${d.inputs.shortFlights} short + ${d.inputs.longFlights} long flights/year). Diet: ${d.diet}t (${d.inputs.diet}). Home: ${d.home}t (${d.inputs.heating} heating). Consumption: ${d.consumption}t. Generate 5 personalised actions.`;
+
+  const actionRaw = await callClaude([{ role: 'user', content: actionMsg }], actionSystemPrompt);
+
+  let actions = [];
+  try {
+    const cleaned = actionRaw.replace(/```json|```/g, '').trim();
+    actions = JSON.parse(cleaned);
+  } catch(e) {
+    actions = [{ title: 'Review your top emission sources', description: 'Focus on the categories where your footprint is highest.', saving_kg: 0 }];
+  }
+
+  const actionHTML = actions.map((a, i) => `
+    <div class="action-item">
+      <div class="action-rank">${i + 1}</div>
+      <div>
+        <div class="action-title">${a.title}</div>
+        <div class="action-desc">${a.description}</div>
+        ${a.saving_kg > 0 ? `<div class="action-saving">🌱 Save ~${a.saving_kg}kg CO₂/year</div>` : ''}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('action-plan-div').innerHTML = `
+    <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:1rem;">Your personalised action plan</div>
+    ${actionHTML}`;
+
+  chatHistory.push({ role: 'user', content: `My carbon footprint is ${d.total}t CO₂e/year. Breakdown: transport ${d.transport}t, flights ${d.flights}t, diet ${d.diet}t, home ${d.home}t, consumption ${d.consumption}t.` });
+  chatHistory.push({ role: 'assistant', content: `I can see your carbon footprint data. Your total is ${d.total} tonnes CO₂e per year. Feel free to ask me any questions about your results or how to reduce your impact!` });
+}
+
+function resetCalc() {
+  document.getElementById('calc-form-section').style.display = 'block';
+  document.getElementById('calc-results').style.display = 'none';
+  footprintData = {};
+}
+
+// --- CHAT ---
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  appendMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
+  const typingEl = appendTyping();
+
+  const systemPrompt = `You are ClimateIQ, a friendly, knowledgeable AI assistant focused on climate change and SDG 13 (Climate Action). You help people understand their carbon footprint, explain climate science clearly, and suggest practical actions. Be conversational, concise (2–4 sentences unless more detail is needed), and encouraging. Always connect answers to real-world impact.`;
+  const reply = await callClaude(chatHistory.slice(-10), systemPrompt);
+
+  typingEl.remove();
+  chatHistory.push({ role: 'assistant', content: reply });
+  appendMsg('bot', reply);
+}
+
+function appendMsg(role, text) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = role === 'bot' ? `<div class="msg-avatar">🌿</div><div class="msg-bubble">${text}</div>` : `<div class="msg-bubble">${text}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function appendTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = `<div class="msg-avatar">🌿</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function sendSuggestion(text) {
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+// --- LEARN ---
+async function loadFacts() {
+  const container = document.getElementById('facts-container');
+  container.innerHTML = '<div class="loading-state" style="display:flex;"><div class="spinner"></div><div class="loading-text">Loading facts...</div></div>';
+
+  const systemPrompt = `You are a climate education assistant. Generate exactly 3 compelling, accurate climate facts related to SDG 13. Each should be surprising, specific, and include a number. Format as JSON array: [{tag, fact}] where tag is a short category label (e.g. "Ocean warming", "Emissions", "Extreme weather"). Only output JSON.`;
+  const raw = await callClaude([{ role: 'user', content: 'Generate 3 climate facts.' }], systemPrompt);
+
+  let facts = [];
+  try {
+    facts = JSON.parse(raw.replace(/```json|```/g, '').trim());
+  } catch(e) {
+    facts = [
+      { tag: 'Emissions', fact: 'The last decade (2011–2020) was the warmest on record, with each of the past four decades being successively warmer than any decade before it since 1850.' },
+      { tag: 'Sea level', fact: 'Global mean sea level has risen by about 20 cm since 1900, with the rate of rise accelerating in recent decades.' },
+      { tag: 'Arctic ice', fact: 'Arctic sea ice extent has declined by about 13% per decade since satellite records began in 1979.' }
+    ];
+  }
+
+  container.innerHTML = facts.map(f => `
+    <div class="fact-card">
+      <div class="fact-tag">${f.tag}</div>
+      <div class="fact-text">${f.fact}</div>
+    </div>`).join('');
+}
+
+function loadQuiz() {
+  const q = QUIZ_QUESTIONS[Math.floor(Math.random() * QUIZ_QUESTIONS.length)];
+  currentQuiz = q;
+  document.getElementById('quiz-container').innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-q">${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((o, i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${o}</button>`).join('')}
+      </div>
+      <div id="quiz-feedback" style="display:none;margin-top:1rem;font-size:13px;color:var(--green-800);background:var(--green-50);padding:10px 14px;border-radius:8px;line-height:1.6;"></div>
+    </div>`;
+}
+
+function answerQuiz(idx) {
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.disabled = true);
+  opts[currentQuiz.ans].classList.add('correct');
+  if (idx !== currentQuiz.ans) opts[idx].classList.add('wrong');
+  const fb = document.getElementById('quiz-feedback');
+  fb.style.display = 'block';
+  fb.textContent = (idx === currentQuiz.ans ? '✅ Correct! ' : '❌ Not quite. ') + currentQuiz.exp;
+}
+
+// Auto-load learn page if navigated to directly
+window.addEventListener('load', () => {
+  loadQuiz();
+  document.getElementById('facts-container').innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:1rem 0;">Enter your API key and click "Refresh facts" to load AI-generated climate facts.</div>';
+});
+</script>
+</body>
+</html>
